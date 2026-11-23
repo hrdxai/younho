@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>한자 마스터 160 - 플래시카드 & 실전 퀴즈</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Serif KR (한자 명조체) & Noto Sans KR (UI 고딕체) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet" />
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans KR"', 'sans-serif'],
+            hanja: ['"Noto Serif KR"', 'serif'],
+          },
+          colors: {
+            hanji: {
+              50: '#FDFBF7',
+              100: '#F7F3EB',
+              200: '#EDE5D5',
+              300: '#DFD2B8',
+            },
+            ink: {
+              800: '#1E293B',
+              900: '#0F172A',
+            },
+            seal: {
+              500: '#DC2626',
+              600: '#B91C1C',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* 기본 스크롤 및 터치 최적화 */
+    html, body {
+      background-color: #F7F3EB;
+      color: #0F172A;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+    }
+
+    /* 3D 카드 플립 애니메이션 스타일 */
+    .perspective-1000 {
+      perspective: 1200px;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+    .flip-card-inner.is-flipped {
+      transform: rotateY(180deg);
+    }
+    .flip-card-face {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: 1.5rem;
+    }
+    .flip-card-back {
+      transform: rotateY(180deg);
+    }
+
+    /* 한자 쓰기 칸 (십자 보조선) 스타일 */
+    .hanja-grid-box {
+      background-image:
+        linear-gradient(to right, transparent 49.5%, rgba(220, 38, 38, 0.14) 49.5%, rgba(220, 38, 38, 0.14) 50.5%, transparent 50.5%),
+        linear-gradient(to bottom, transparent 49.5%, rgba(220, 38, 38, 0.14) 49.5%, rgba(220, 38, 38, 0.14) 50.5%, transparent 50.5%);
+      border: 1.5px solid rgba(220, 38, 38, 0.22);
+    }
+
+    /* 카드 전환 슬라이드 애니메이션 */
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(24px) scale(0.98); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-24px) scale(0.98); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    .animate-slide-right {
+      animation: slideInRight 0.28s ease-out forwards;
+    }
+    .animate-slide-left {
+      animation: slideInLeft 0.28s ease-out forwards;
+    }
+
+    /* 커스텀 스크롤바 숨김 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-red-100 selection:text-red-900">
+
+  <!-- 상단 헤더 -->
+  <header class="sticky top-0 z-30 bg-hanji-50/90 backdrop-blur-md border-b border-hanji-200 px-4 py-3">
+    <div class="max-w-3xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-seal-500 text-white flex items-center justify-center font-hanja font-bold text-lg shadow-sm">
+          漢
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-ink-900 leading-tight">
+            2학기 한문 마스터 <span class="text-seal-600">160</span>
+          </h1>
+          <p class="text-[11px] text-slate-500 font-medium">진관중 2학년 · 터치 카드 & 스마트 복습</p>
+        </div>
+      </div>
+
+      <!-- 우측 상태 요약 및 설정 버튼 -->
+      <div class="flex items-center gap-2">
+        <button id="soundToggleBtn" onclick="toggleSound()" title="효과음 켜기/끄기"
+          class="p-2 rounded-xl bg-white border border-hanji-200 text-slate-600 hover:bg-hanji-100 transition active:scale-95">
+          <i id="soundIcon" class="ph ph-speaker-high text-lg"></i>
+        </button>
+        <button onclick="openResetModal()" title="학습 기록 초기화"
+          class="p-2 rounded-xl bg-white border border-hanji-200 text-slate-600 hover:text-red-600 hover:bg-red-50 transition active:scale-95">
+          <i class="ph ph-arrow-counter-clockwise text-lg"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 데스크톱/태블릿 상단 탭 네비게이션 -->
+  <nav class="hidden sm:block bg-white border-b border-hanji-200">
+    <div class="max-w-3xl mx-auto px-4 flex gap-2 py-2">
+      <button onclick="switchTab('home')" data-tab="home" class="nav-tab flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition">
+        <i class="ph ph-chart-pie-slice text-lg"></i> 학습 현황 & 추천
+      </button>
+      <button onclick="switchTab('cards')" data-tab="cards" class="nav-tab flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition">
+        <i class="ph ph-cards text-lg"></i> 플래시카드 암기
+      </button>
+      <button onclick="switchTab('quiz')" data-tab="quiz" class="nav-tab flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition">
+        <i class="ph ph-exam text-lg"></i> 실전 퀴즈
+      </button>
+      <button onclick="switchTab('list')" data-tab="list" class="nav-tab flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition">
+        <i class="ph ph-grid-four text-lg"></i> 160자 전체표
+      </button>
+    </div>
+  </nav>
+
+  <!-- 메인 콘텐츠 영역 -->
+  <main class="flex-1 max-w-3xl w-full mx-auto px-4 pt-4 pb-24 sm:pb-10">
+
+    <!-- ==================== 1. 홈 / 학습 현황 탭 ==================== -->
+    <section id="tab-home" class="space-y-5">
+      <!-- 전체 진행률 카드 -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-hanji-200">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-seal-600 mb-1">전체 학습 진행률</span>
+            <h2 class="text-xl font-bold text-ink-900">
+              총 160자 중 <span id="homeMasteredCount" class="text-emerald-600">0</span>자 암기 완료
+            </h2>
+          </div>
+          <div class="text-right">
+            <span id="homeMasteredPercent" class="text-2xl sm:text-3xl font-extrabold text-ink-900">0%</span>
+          </div>
+        </div>
+
+        <!-- 진행 바 -->
+        <div class="w-full h-3.5 bg-hanji-100 rounded-full overflow-hidden flex mb-4">
+          <div id="barMastered" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+          <div id="barReview" class="bg-amber-400 h-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <!-- 3단 상태 요약 -->
+        <div class="grid grid-cols-3 gap-2.5 text-center">
+          <div class="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-3">
+            <div class="text-xs font-medium text-emerald-700 mb-0.5">암기 완료</div>
+            <div id="statMastered" class="text-lg font-bold text-emerald-800">0</div>
+          </div>
+          <div class="bg-amber-50/70 border border-amber-100 rounded-2xl p-3">
+            <div class="text-xs font-medium text-amber-700 mb-0.5">헷갈림(복습)</div>
+            <div id="statReview" class="text-lg font-bold text-amber-800">0</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200/70 rounded-2xl p-3">
+            <div class="text-xs font-medium text-slate-600 mb-0.5">미학습</div>
+            <div id="statUnseen" class="text-lg font-bold text-slate-800">160</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 추천 학습 액션 버튼 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button onclick="startRecommendedStudy('continue')"
+          class="flex items-center justify-between p-4 rounded-2xl bg-ink-900 text-white shadow-md hover:bg-ink-800 transition active:scale-[0.99] text-left">
+          <div>
+            <div class="text-xs text-slate-300 font-medium mb-0.5">추천 코스 1 · 진도 이어하기</div>
+            <div class="text-base font-bold">미학습 카드 집중 암기</div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
+            <i class="ph ph-play-fill text-xl"></i>
+          </div>
+        </button>
+
+        <button onclick="startRecommendedStudy('review')"
+          class="flex items-center justify-between p-4 rounded-2xl bg-amber-500 text-white shadow-md hover:bg-amber-600 transition active:scale-[0.99] text-left">
+          <div>
+            <div class="text-xs text-amber-100 font-medium mb-0.5">추천 코스 2 · 약점 보완</div>
+            <div class="text-base font-bold">헷갈리는 한자 집중 복습 (<span id="btnReviewCount">0</span>)</div>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+            <i class="ph ph-arrows-clockwise text-xl"></i>
+          </div>
+        </button>
+      </div>
+
+      <!-- 단원별 학습 현황 (8개 단원) -->
+      <div class="bg-white rounded-3xl p-5 shadow-sm border border-hanji-200">
+        <div class="flex items-center justify-between mb-3.5">
+          <h3 class="text-base font-bold text-ink-900 flex items-center gap-1.5">
+            <i class="ph ph-books text-seal-600 text-lg"></i> 교과서 단원별 학습하기
+          </h3>
+          <span class="text-xs text-slate-400">터치하면 해당 단원 카드로 이동</span>
+        </div>
+        <div id="unitProgressList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <!-- JS로 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 추천 학습법 가이드 -->
+      <div class="bg-hanji-100/80 border border-hanji-200 rounded-2xl p-4 text-xs text-slate-600 space-y-1.5">
+        <div class="font-bold text-ink-800 flex items-center gap-1.5 text-sm">
+          <i class="ph ph-lightbulb text-amber-500 text-base"></i> 효과적인 3단계 한자 암기 추천법
+        </div>
+        <p>1. <strong>플래시카드(1회독)</strong>: 한자를 보고 속으로 뜻·음을 먼저 떠올린 뒤 카드를 터치해 확인하세요.</p>
+        <p>2. <strong>메타인지 분류</strong>: 바로 떠오르면 <span class="text-emerald-700 font-semibold">[외웠어요]</span>, 0.5초라도 망설이면 <span class="text-amber-700 font-semibold">[헷갈려요]</span>를 눌러 반복 노출시키세요.</p>
+        <p>3. <strong>역방향 & 실전 퀴즈</strong>: 카드 상단의 <strong>[뜻→한자 모드]</strong>와 <strong>[주관식 퀴즈]</strong>까지 통과하면 시험 준비 끝!</p>
+      </div>
+    </section>
+
+    <!-- ==================== 2. 플래시카드 암기 탭 ==================== -->
+    <section id="tab-cards" class="hidden space-y-3.5">
+      <!-- 상단 필터 및 옵션 바 -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-hanji-200 space-y-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- 단원 선택 드롭다운 -->
+          <select id="cardUnitFilter" onchange="applyCardFilters()"
+            class="flex-1 min-w-[160px] bg-hanji-50 border border-hanji-200 rounded-xl px-3 py-2 text-sm font-semibold text-ink-900 focus:outline-none focus:ring-2 focus:ring-seal-500">
+            <option value="all">전체 한자 (1 ~ 160번)</option>
+            <option value="u11">11과. 친구와 함께 (1~16번)</option>
+            <option value="u12">12과. 공부야 놀자 (17~32번)</option>
+            <option value="u13">13과. 역사 속으로 (33~55번)</option>
+            <option value="u16">16과. 옛사람의 지혜 (56~80번)</option>
+            <option value="u19">19과. 독도는 우리 땅 (81~104번)</option>
+            <option value="u21">21과. 나를 돌아보며 (105~128번)</option>
+            <option value="u22">22과. 소중한 부모님 (129~146번)</option>
+            <option value="u23">23과. 남을 생각하는 마음 (147~160번)</option>
+          </select>
+
+          <!-- 상태 필터 -->
+          <select id="cardStatusFilter" onchange="applyCardFilters()"
+            class="bg-hanji-50 border border-hanji-200 rounded-xl px-3 py-2 text-sm font-semibold text-ink-900 focus:outline-none focus:ring-2 focus:ring-seal-500">
+            <option value="all">모든 상태</option>
+            <option value="unmastered">미암기만 (미학습+헷갈림)</option>
+            <option value="review">헷갈리는 카드만</option>
+            <option value="mastered">암기 완료만</option>
+          </select>
+        </div>
+
+        <!-- 보조 기능 버튼 줄 -->
+        <div class="flex items-center justify-between pt-1 border-t border-hanji-100 text-xs">
+          <div class="flex items-center gap-1.5">
+            <button id="reverseModeBtn" onclick="toggleReverseMode()"
+              class="px-2.5 py-1.5 rounded-lg border border-hanji-200 bg-hanji-50 text-slate-700 font-semibold flex items-center gap-1 hover:bg-hanji-100 transition">
+              <i class="ph ph-arrows-left-right"></i> <span id="reverseModeLabel">한자 → 뜻</span>
+            </button>
+            <button onclick="shuffleDeck()"
+              class="px-2.5 py-1.5 rounded-lg border border-hanji-200 bg-hanji-50 text-slate-700 font-semibold flex items-center gap-1 hover:bg-hanji-100 transition">
+              <i class="ph ph-shuffle"></i> 섞기
+            </button>
+          </div>
+          <div class="font-bold text-slate-600">
+            <span id="cardCounterText" class="text-seal-600">1</span> / <span id="cardTotalText">160</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 빈 덱 안내 화면 (필터 결과 0개일 때) -->
+      <div id="emptyDeckState" class="hidden bg-white rounded-3xl p-10 text-center border border-hanji-200 shadow-sm space-y-3">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-3xl">
+          <i class="ph ph-check-circle"></i>
+        </div>
+        <h3 class="text-lg font-bold text-ink-900">해당 조건의 카드가 모두 완료되었어요!</h3>
+        <p class="text-sm text-slate-500">다른 단원을 선택하거나 상태 필터를 '모든 상태'로 변경해 보세요.</p>
+        <button onclick="resetCardFilters()" class="px-5 py-2.5 rounded-xl bg-ink-900 text-white text-sm font-semibold hover:bg-ink-800 transition">
+          전체 카드 보기
+        </button>
+      </div>
+
+      <!-- 플래시카드 컨테이너 (터치 스와이프 & 클릭 플립 지원) -->
+      <div id="flashcardArea" class="space-y-4">
+        <div id="cardSwipeZone" class="perspective-1000 w-full h-[350px] sm:h-[390px] cursor-pointer select-none">
+          <div id="flipCardInner" class="flip-card-inner" onclick="flipCard()">
+
+            <!-- [앞면] -->
+            <div class="flip-card-face bg-white border-2 border-hanji-200 shadow-md p-6 flex flex-col justify-between">
+              <!-- 상단 메타 정보 -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span id="frontNumber" class="px-2.5 py-1 rounded-lg bg-hanji-100 text-ink-800 font-bold text-xs">No. 001</span>
+                  <span id="frontUnit" class="text-xs font-medium text-slate-500">11과. 친구와 함께</span>
+                </div>
+                <span id="frontStatusBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+                  미학습
+                </span>
+              </div>
+
+              <!-- 중앙 한자 또는 뜻 -->
+              <div class="flex-1 flex flex-col items-center justify-center my-2">
+                <div id="frontHanjaBox" class="hanja-grid-box w-44 h-44 sm:w-52 sm:h-52 rounded-2xl flex items-center justify-center bg-hanji-50/50">
+                  <span id="frontMainText" class="font-hanja text-8xl sm:text-9xl font-bold text-ink-900 leading-none">竹</span>
+                </div>
+                <!-- 역방향 모드(뜻→한자)일 때 보여지는 텍스트 -->
+                <div id="frontReverseText" class="hidden text-center px-4">
+                  <div class="text-xs font-semibold text-seal-600 mb-2">이 뜻과 음을 가진 한자는?</div>
+                  <div id="frontMeaningBig" class="text-3xl sm:text-4xl font-extrabold text-ink-900 break-keep">대나무 죽</div>
+                </div>
+              </div>
+
+              <!-- 하단 터치 안내 -->
+              <div class="flex items-center justify-center gap-1.5 text-xs font-medium text-slate-400">
+                <i class="ph ph-hand-tap text-base text-seal-500 animate-pulse"></i>
+                <span>카드를 터치하면 뒷면이 열립니다</span>
+              </div>
+            </div>
+
+            <!-- [뒷면] -->
+            <div class="flip-card-face flip-card-back bg-gradient-to-b from-white to-hanji-50 border-2 border-seal-500/30 shadow-lg p-6 flex flex-col justify-between">
+              <!-- 상단 미니 한자 & 음성 듣기 -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span id="backNumber" class="px-2.5 py-1 rounded-lg bg-red-50 text-seal-600 font-bold text-xs">No. 001</span>
+                  <span id="backMiniHanja" class="font-hanja text-xl font-bold text-ink-900">竹</span>
+                </div>
+                <button type="button" onclick="event.stopPropagation(); speakCurrentHanja()"
+                  class="px-3 py-1.5 rounded-xl bg-white border border-hanji-200 text-slate-700 hover:bg-hanji-100 text-xs font-semibold flex items-center gap-1 shadow-sm active:scale-95">
+                  <i class="ph ph-speaker-simple-high text-seal-600 text-sm"></i> 발음 듣기
+                </button>
+              </div>
+
+              <!-- 중앙 뜻(훈)과 소리(음) 강조 표시 -->
+              <div class="flex-1 flex flex-col items-center justify-center text-center px-2">
+                <!-- 역방향 모드일 때 뒷면에 큰 한자 표시 -->
+                <div id="backReverseHanja" class="hidden font-hanja text-7xl sm:text-8xl font-bold text-ink-900 mb-3">竹</div>
+
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">훈(뜻) · 음(소리)</div>
+                <div id="backFullReading" class="text-3xl sm:text-4xl font-extrabold text-ink-900 mb-3 break-keep">
+                  대나무 <span class="text-seal-600">죽</span>
+                </div>
+
+                <!-- 훈/음 분리 뱃지 -->
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                  <span class="px-3 py-1 rounded-full bg-white border border-hanji-200 text-xs font-semibold text-slate-600">
+                    뜻(훈): <strong id="backHun" class="text-ink-900">대나무</strong>
+                  </span>
+                  <span class="px-3 py-1 rounded-full bg-red-50 border border-red-100 text-xs font-semibold text-seal-600">
+                    소리(음): <strong id="backEum">죽</strong>
+                  </span>
+                </div>
+
+                <!-- 연관 어휘/성어 힌트 -->
+                <div id="backHintBox" class="mt-4 px-3.5 py-2 rounded-xl bg-amber-50/80 border border-amber-200/70 text-xs text-amber-900 font-medium">
+                  💡 <span id="backHintText">관련 성어: 죽마고우(竹馬故友)</span>
+                </div>
+              </div>
+
+              <!-- 하단 안내 -->
+              <div class="text-center text-[11px] text-slate-400">
+                아래 버튼을 눌러 암기 상태를 체크하세요
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 학습 평가 & 이전/다음 컨트롤 바 -->
+        <div class="grid grid-cols-12 gap-2.5 items-center">
+          <button onclick="prevCard()" aria-label="이전 카드"
+            class="col-span-2 h-14 rounded-2xl bg-white border border-hanji-200 text-slate-700 hover:bg-hanji-100 flex items-center justify-center shadow-sm active:scale-95 transition">
+            <i class="ph ph-caret-left text-xl font-bold"></i>
+          </button>
+
+          <button onclick="markCard('review')"
+            class="col-span-4 h-14 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-800 hover:bg-amber-100 font-bold text-sm flex flex-col items-center justify-center shadow-sm active:scale-95 transition">
+            <span class="flex items-center gap-1"><i class="ph ph-question text-base"></i> 헷갈려요</span>
+            <span class="text-[10px] font-normal text-amber-700">나중에 다시 복습</span>
+          </button>
+
+          <button onclick="markCard('mastered')"
+            class="col-span-4 h-14 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-sm flex flex-col items-center justify-center shadow-sm active:scale-95 transition">
+            <span class="flex items-center gap-1"><i class="ph ph-check-circle text-base"></i> 외웠어요</span>
+            <span class="text-[10px] font-normal text-emerald-100">암기 완료 체크</span>
+          </button>
+
+          <button onclick="nextCard()" aria-label="다음 카드"
+            class="col-span-2 h-14 rounded-2xl bg-white border border-hanji-200 text-slate-700 hover:bg-hanji-100 flex items-center justify-center shadow-sm active:scale-95 transition">
+            <i class="ph ph-caret-right text-xl font-bold"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. 실전 퀴즈 탭 ==================== -->
+    <section id="tab-quiz" class="hidden space-y-4">
+      <!-- 퀴즈 설정 화면 -->
+      <div id="quizSetupView" class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-hanji-200 space-y-5">
+        <div>
+          <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-seal-600 mb-1">실전 테스트</span>
+          <h2 class="text-xl font-bold text-ink-900">맞춤형 한자 퀴즈 설정</h2>
+          <p class="text-xs text-slate-500 mt-0.5">틀린 문제는 자동으로 '헷갈려요' 복습 노트에 저장됩니다.</p>
+        </div>
+
+        <!-- 출제 범위 -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-700">1. 출제 범위 선택</label>
+          <select id="quizScopeSelect"
+            class="w-full bg-hanji-50 border border-hanji-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-900">
+            <option value="all">전체 160자 (1 ~ 160번)</option>
+            <option value="review">헷갈리는 한자 집중 공략</option>
+            <option value="unmastered">아직 못 외운 한자 전체</option>
+            <option value="u11">11과. 친구와 함께 (1~16번)</option>
+            <option value="u12">12과. 공부야 놀자 (17~32번)</option>
+            <option value="u13">13과. 역사 속으로 (33~55번)</option>
+            <option value="u16">16과. 옛사람의 지혜 (56~80번)</option>
+            <option value="u19">19과. 독도는 우리 땅 (81~104번)</option>
+            <option value="u21">21과. 나를 돌아보며 (105~128번)</option>
+            <option value="u22">22과. 소중한 부모님 (129~146번)</option>
+            <option value="u23">23과. 남을 생각하는 마음 (147~160번)</option>
+          </select>
+        </div>
+
+        <!-- 문제 유형 -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-700">2. 퀴즈 유형 선택</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button type="button" onclick="selectQuizType('hanja2meaning')" data-qtype="hanja2meaning"
+              class="qtype-btn p-3 rounded-xl border-2 border-seal-500 bg-red-50/50 text-left transition">
+              <div class="text-xs font-bold text-seal-600 mb-0.5">객관식 (기본)</div>
+              <div class="text-sm font-bold text-ink-900">한자 → 훈·음</div>
+            </button>
+            <button type="button" onclick="selectQuizType('meaning2hanja')" data-qtype="meaning2hanja"
+              class="qtype-btn p-3 rounded-xl border-2 border-hanji-200 bg-white text-left transition">
+              <div class="text-xs font-bold text-slate-400 mb-0.5">객관식 (심화)</div>
+              <div class="text-sm font-bold text-ink-900">훈·음 → 한자</div>
+            </button>
+            <button type="button" onclick="selectQuizType('typing')" data-qtype="typing"
+              class="qtype-btn p-3 rounded-xl border-2 border-hanji-200 bg-white text-left transition">
+              <div class="text-xs font-bold text-slate-400 mb-0.5">서술형 대비</div>
+              <div class="text-sm font-bold text-ink-900">뜻·음 직접 입력</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 문항 수 -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-700">3. 문항 수</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="selectQuizCount(10)" data-qcount="10"
+              class="qcount-btn py-2.5 rounded-xl border-2 border-seal-500 bg-red-50/50 text-sm font-bold text-seal-600">
+              10문제
+            </button>
+            <button type="button" onclick="selectQuizCount(20)" data-qcount="20"
+              class="qcount-btn py-2.5 rounded-xl border-2 border-hanji-200 bg-white text-sm font-bold text-slate-700">
+              20문제
+            </button>
+            <button type="button" onclick="selectQuizCount(999)" data-qcount="999"
+              class="qcount-btn py-2.5 rounded-xl border-2 border-hanji-200 bg-white text-sm font-bold text-slate-700">
+              범위 전체
+            </button>
+          </div>
+        </div>
+
+        <button onclick="startQuiz()"
+          class="w-full py-3.5 rounded-2xl bg-seal-600 hover:bg-seal-500 text-white font-bold text-base shadow-md transition active:scale-[0.99]">
+          퀴즈 시작하기
+        </button>
+      </div>
+
+      <!-- 퀴즈 진행 화면 -->
+      <div id="quizPlayView" class="hidden space-y-4">
+        <!-- 상단 진행바 & 점수 -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-hanji-200">
+          <div class="flex items-center justify-between text-xs font-bold mb-2">
+            <span class="text-slate-500">문제 <span id="quizCurrentNum" class="text-ink-900">1</span> / <span id="quizTotalNum">10</span></span>
+            <div class="flex items-center gap-3">
+              <span id="quizStreakBadge" class="hidden px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">🔥 2연속 정답!</span>
+              <span class="text-emerald-600">정답 <span id="quizScoreNum">0</span></span>
+              <button onclick="quitQuiz()" class="text-slate-400 hover:text-slate-600 underline">중단</button>
+            </div>
+          </div>
+          <div class="w-full h-2 bg-hanji-100 rounded-full overflow-hidden">
+            <div id="quizProgressBar" class="bg-seal-500 h-full transition-all duration-300" style="width: 10%"></div>
+          </div>
+        </div>
+
+        <!-- 문제 카드 -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-hanji-200 text-center space-y-5">
+          <div class="inline-block px-3 py-1 rounded-full bg-hanji-100 text-xs font-semibold text-slate-600" id="quizQuestionTag">
+            No. 001 · 11과
+          </div>
+
+          <div id="quizPromptContainer" class="py-2">
+            <!-- 한자 또는 뜻 표시 -->
+          </div>
+
+          <!-- 객관식 4지선다 영역 -->
+          <div id="quizOptionsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
+            <!-- JS로 렌더링 -->
+          </div>
+
+          <!-- 주관식 입력 영역 -->
+          <form id="quizTypingForm" onsubmit="submitTypingAnswer(event)" class="hidden space-y-3 max-w-md mx-auto">
+            <input type="text" id="quizTypingInput" autocomplete="off" placeholder="예: 대나무 죽 (또는 뜻/음 입력)"
+              class="w-full px-4 py-3.5 rounded-2xl border-2 border-hanji-200 focus:border-seal-500 focus:outline-none text-center text-lg font-bold" />
+            <button type="submit" id="quizTypingSubmitBtn"
+              class="w-full py-3 rounded-2xl bg-ink-900 text-white font-bold text-sm hover:bg-ink-800 transition">
+              정답 확인
+            </button>
+          </form>
+
+          <!-- 정답/오답 피드백 박스 -->
+          <div id="quizFeedbackBox" class="hidden rounded-2xl p-4 text-sm font-medium space-y-2">
+            <div id="quizFeedbackTitle" class="font-bold text-base"></div>
+            <div id="quizFeedbackDetail" class="text-xs opacity-90"></div>
+            <button onclick="nextQuizQuestion()"
+              class="mt-2 w-full sm:w-auto px-6 py-2.5 rounded-xl bg-ink-900 text-white font-bold text-xs hover:bg-ink-800 transition">
+              다음 문제 →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 퀴즈 결과 화면 -->
+      <div id="quizResultView" class="hidden bg-white rounded-3xl p-6 shadow-sm border border-hanji-200 text-center space-y-5">
+        <div class="w-16 h-16 rounded-2xl bg-red-50 text-seal-600 flex items-center justify-center mx-auto text-4xl">
+          <i class="ph ph-trophy"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl font-extrabold text-ink-900">퀴즈 완료!</h2>
+          <p id="quizResultSummary" class="text-sm text-slate-500 mt-1">10문제 중 8문제를 맞혔습니다.</p>
+        </div>
+
+        <div class="text-4xl font-black text-seal-600" id="quizResultScorePercent">80점</div>
+
+        <!-- 틀린 문제 목록 -->
+        <div id="quizWrongListContainer" class="hidden text-left bg-amber-50/70 border border-amber-200 rounded-2xl p-4 space-y-2">
+          <div class="text-xs font-bold text-amber-900 flex items-center gap-1">
+            <i class="ph ph-warning-circle"></i> 틀린 한자 (자동으로 '헷갈려요'에 추가됨)
+          </div>
+          <div id="quizWrongItems" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2.5 pt-2">
+          <button onclick="resetQuizToSetup()"
+            class="flex-1 py-3 rounded-2xl bg-hanji-100 text-ink-900 font-bold text-sm hover:bg-hanji-200 transition">
+            다른 퀴즈 풀기
+          </button>
+          <button onclick="reviewWrongFromQuiz()"
+            class="flex-1 py-3 rounded-2xl bg-ink-900 text-white font-bold text-sm hover:bg-ink-800 transition">
+            헷갈리는 카드 복습하기
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 4. 160자 전체 한자표 탭 ==================== -->
+    <section id="tab-list" class="hidden space-y-3.5">
+      <!-- 검색 및 뜻 가리기 컨트롤 -->
+      <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-hanji-200 space-y-2.5">
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="listSearchInput" oninput="renderFullList()"
+              placeholder="번호(1~160), 한자, 뜻 또는 음 검색..."
+              class="w-full pl-9 pr-3 py-2 rounded-xl bg-hanji-50 border border-hanji-200 text-sm focus:outline-none focus:ring-2 focus:ring-seal-500" />
+          </div>
+          <button id="blindMeaningBtn" onclick="toggleBlindMeaning()"
+            class="px-3 py-2 rounded-xl border border-hanji-200 bg-hanji-50 text-xs font-bold text-slate-700 hover:bg-hanji-100 flex items-center gap-1 shrink-0 transition">
+            <i id="blindIcon" class="ph ph-eye-slash"></i>
+            <span id="blindLabel">뜻 가리기</span>
+          </button>
+        </div>
+
+        <!-- 단원 빠른 필터 칩 -->
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button onclick="setListUnit('all')" data-lunit="all" class="lunit-chip px-3 py-1 rounded-full text-xs font-bold bg-ink-900 text-white shrink-0">전체</button>
+          <button onclick="setListUnit('u11')" data-lunit="u11" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">11과(1~16)</button>
+          <button onclick="setListUnit('u12')" data-lunit="u12" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">12과(17~32)</button>
+          <button onclick="setListUnit('u13')" data-lunit="u13" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">13과(33~55)</button>
+          <button onclick="setListUnit('u16')" data-lunit="u16" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">16과(56~80)</button>
+          <button onclick="setListUnit('u19')" data-lunit="u19" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">19과(81~104)</button>
+          <button onclick="setListUnit('u21')" data-lunit="u21" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">21과(105~128)</button>
+          <button onclick="setListUnit('u22')" data-lunit="u22" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">22과(129~146)</button>
+          <button onclick="setListUnit('u23')" data-lunit="u23" class="lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0">23과(147~160)</button>
+        </div>
+      </div>
+
+      <!-- 160자 그리드 -->
+      <div id="hanjaGridContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <!-- JS로 렌더링 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 모바일 하단 고정 네비게이션 바 -->
+  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-hanji-200 px-2 py-1.5">
+    <div class="grid grid-cols-4 gap-1">
+      <button onclick="switchTab('home')" data-tab="home" class="nav-tab-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold transition">
+        <i class="ph ph-chart-pie-slice text-xl mb-0.5"></i>
+        <span>학습현황</span>
+      </button>
+      <button onclick="switchTab('cards')" data-tab="cards" class="nav-tab-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold transition">
+        <i class="ph ph-cards text-xl mb-0.5"></i>
+        <span>카드암기</span>
+      </button>
+      <button onclick="switchTab('quiz')" data-tab="quiz" class="nav-tab-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold transition">
+        <i class="ph ph-exam text-xl mb-0.5"></i>
+        <span>실전퀴즈</span>
+      </button>
+      <button onclick="switchTab('list')" data-tab="list" class="nav-tab-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold transition">
+        <i class="ph ph-grid-four text-xl mb-0.5"></i>
+        <span>전체표</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 초기화 확인 모달 (window.confirm 대체) -->
+  <div id="resetModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-xl space-y-4">
+      <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-2xl">
+        <i class="ph ph-warning"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-ink-900">학습 기록을 초기화할까요?</h3>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+          지금까지 체크한 '암기 완료' 및 '헷갈려요' 상태가 모두 초기화되어 0%부터 다시 시작합니다.
+        </p>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeResetModal()" class="flex-1 py-2.5 rounded-xl bg-hanji-100 text-slate-700 font-bold text-sm hover:bg-hanji-200">
+          취소
+        </button>
+        <button onclick="confirmResetProgress()" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700">
+          초기화 실행
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 -->
+  <div id="toastMsg" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+    <div class="bg-ink-900/95 text-white px-4 py-2 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5">
+      <i class="ph ph-check-circle text-emerald-400 text-sm"></i>
+      <span id="toastText">저장되었습니다</span>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * 1. 진관중학교 2026학년도 2학기 한문 160자 전체 데이터베이스
+     * =========================================================================
+     */
+    const UNITS = [
+      { id: 'u11', name: '11과. 친구와 함께', pages: 'p.68~75', start: 1, end: 16 },
+      { id: 'u12', name: '12과. 공부야 놀자', pages: 'p.72~75', start: 17, end: 32 },
+      { id: 'u13', name: '13과. 역사 속으로', pages: 'p.76~79', start: 33, end: 55 },
+      { id: 'u16', name: '16과. 옛사람의 지혜', pages: 'p.94~97', start: 56, end: 80 },
+      { id: 'u19', name: '19과. 독도는 우리 땅', pages: 'p.112~115', start: 81, end: 104 },
+      { id: 'u21', name: '21과. 나를 돌아보며', pages: 'p.126~129', start: 105, end: 128 },
+      { id: 'u22', name: '22과. 소중한 부모님', pages: 'p.130~133', start: 129, end: 146 },
+      { id: 'u23', name: '23과. 남을 생각하는 마음', pages: 'p.134~137', start: 147, end: 160 }
+    ];
+
+    // 첨부된 학습지 1번~160번 정밀 수록 (한자, 뜻(훈), 소리(음), 전체표기, 연관 성어/어휘 힌트)
+    const HANJA_DATA = [
+      { id: 1, hanja: '竹', hun: '대나무', eum: '죽', full: '대나무 죽', hint: '죽마고우(竹馬故友): 어릴 때부터 같이 놀며 자란 친한 벗' },
+      { id: 2, hanja: '馬', hun: '말', eum: '마', full: '말 마', hint: '죽마고우(竹馬故友), 주마간산(走馬看山)' },
+      { id: 3, hanja: '故', hun: '옛', eum: '고', full: '옛 고', hint: '죽마고우(竹馬故友), 온고지신(溫故知新)' },
+      { id: 4, hanja: '友', hun: '벗', eum: '우', full: '벗 우', hint: '죽마고우(竹馬故友), 붕우유신(朋友有信)' },
+      { id: 5, hanja: '莫', hun: '없다', eum: '막', full: '없다 막', hint: '막역지우(莫逆之友): 서로 거스름이 없는 허물없는 친구' },
+      { id: 6, hanja: '逆', hun: '거스르다', eum: '역', full: '거스르다 역', hint: '막역지우(莫逆之友), 역지사지(易地思之)' },
+      { id: 7, hanja: '之', hun: '어조사', eum: '지', full: '어조사 지', hint: '관포지교(管鮑之交), 막역지우(莫逆之友)' },
+      { id: 8, hanja: '朋', hun: '벗', eum: '붕', full: '벗 붕', hint: '붕우유신(朋友有信): 친구 사이에는 믿음이 있어야 함' },
+      { id: 9, hanja: '有', hun: '있다', eum: '유', full: '있다 유', hint: '붕우유신(朋友有信), 유비무환(有備無患)' },
+      { id: 10, hanja: '信', hun: '믿다', eum: '신', full: '믿다 신', hint: '붕우유신(朋友有信), 신뢰(信賴)' },
+      { id: 11, hanja: '知', hun: '알다', eum: '지', full: '알다 지', hint: '지기지우(知己之友): 자기를 알아주는 참된 벗' },
+      { id: 12, hanja: '己', hun: '자기', eum: '기', full: '자기 기', hint: '지기(知己), 극기복례(克己復禮)' },
+      { id: 13, hanja: '管', hun: '피리', eum: '관', full: '피리 관', hint: '관포지교(管鮑之交): 관중과 포숙아의 깊은 우정' },
+      { id: 14, hanja: '鮑', hun: '절인어물', eum: '포', full: '절인어물 포', hint: '관포지교(管鮑之交): 변함없는 참된 우정' },
+      { id: 15, hanja: '交', hun: '사귀다', eum: '교', full: '사귀다 교', hint: '관포지교(管鮑之交), 교우(交友)' },
+      { id: 16, hanja: '識', hun: '알다', eum: '식', full: '알다 식', hint: '지식(知識), 상식(常識)' },
+
+      { id: 17, hanja: '敎', hun: '가르치다', eum: '교', full: '가르치다 교', hint: '교학상장(敎學相長): 가르치고 배우면서 함께 성장함' },
+      { id: 18, hanja: '學', hun: '배우다', eum: '학', full: '배우다 학', hint: '교학상장(敎學相長), 학습(學習)' },
+      { id: 19, hanja: '相', hun: '서로', eum: '상', full: '서로 상', hint: '교학상장(敎學相長), 상부상조(相扶相助)' },
+      { id: 20, hanja: '長', hun: '자라다', eum: '장', full: '자라다 장', hint: '교학상장(敎學相長), 성장(成長)' },
+      { id: 21, hanja: '典', hun: '책', eum: '전', full: '책 전', hint: '사전(辭典), 고전(古典)' },
+      { id: 22, hanja: '不', hun: '아니다', eum: '불', full: '아니다 불', hint: '수불석권(手不釋卷): 손에서 책을 놓지 않고 열심히 공부함' },
+      { id: 23, hanja: '釋', hun: '풀다', eum: '석', full: '풀다 석', hint: '수불석권(手不釋卷), 해석(解釋)' },
+      { id: 24, hanja: '卷', hun: '책', eum: '권', full: '책 권', hint: '수불석권(手不釋卷), 독서백편(讀書百遍)' },
+      { id: 25, hanja: '晝', hun: '낮', eum: '주', full: '낮 주', hint: '주경야독(晝耕夜讀): 낮에는 농사짓고 밤에는 공부함' },
+      { id: 26, hanja: '耕', hun: '밭갈다', eum: '경', full: '밭갈다 경', hint: '주경야독(晝耕夜讀), 경작(耕作)' },
+      { id: 27, hanja: '夜', hun: '밤', eum: '야', full: '밤 야', hint: '주경야독(晝耕夜讀), 심야(深夜)' },
+      { id: 28, hanja: '讀', hun: '읽다', eum: '독', full: '읽다 독', hint: '주경야독(晝耕夜讀), 독서(讀書)' },
+      { id: 29, hanja: '螢', hun: '반딧불이', eum: '형', full: '반딧불이 형', hint: '형설지공(螢雪之功): 반딧불과 눈빛으로 이룬 공부의 공' },
+      { id: 30, hanja: '雪', hun: '눈', eum: '설', full: '눈 설', hint: '형설지공(螢雪之功), 백설(白雪)' },
+      { id: 31, hanja: '功', hun: '공', eum: '공', full: '공 공', hint: '형설지공(螢雪之功), 성공(成功)' },
+      { id: 32, hanja: '統', hun: '거느리다', eum: '통', full: '거느리다 통', hint: '통일(統一), 전통(傳統)' },
+
+      { id: 33, hanja: '結', hun: '맺다', eum: '결', full: '맺다 결', hint: '결초보은(結草報恩): 죽어서도 풀을 묶어 은혜를 갚음' },
+      { id: 34, hanja: '草', hun: '풀', eum: '초', full: '풀 초', hint: '결초보은(結草報恩), 초원(草原)' },
+      { id: 35, hanja: '報', hun: '갚다', eum: '보', full: '갚다 보', hint: '결초보은(結草報恩), 음덕양보(陰德陽報)' },
+      { id: 36, hanja: '恩', hun: '은혜', eum: '은', full: '은혜 은', hint: '결초보은(結草報恩), 은인(恩人)' },
+      { id: 37, hanja: '場', hun: '마당', eum: '장', full: '마당 장', hint: '광장(廣場), 운동장(運動場)' },
+      { id: 38, hanja: '面', hun: '낯', eum: '면', full: '낯 면', hint: '사면초가(四面楚歌): 사방이 적에게 둘러싸인 고립무원 상태' },
+      { id: 39, hanja: '楚', hun: '초나라', eum: '초', full: '초나라 초', hint: '사면초가(四面楚歌)' },
+      { id: 40, hanja: '歌', hun: '노래', eum: '가', full: '노래 가', hint: '사면초가(四面楚歌), 애국가(愛國歌)' },
+      { id: 41, hanja: '漁', hun: '물고기잡다', eum: '어', full: '물고기잡다 어', hint: '어부지리(漁父之利): 둘이 다투는 틈에 제3자가 이익을 얻음' },
+      { id: 42, hanja: '法', hun: '법', eum: '법', full: '법 법', hint: '법칙(法則), 방법(方法)' },
+      { id: 43, hanja: '利', hun: '이롭다', eum: '리', full: '이롭다 리', hint: '어부지리(漁父之利), 이익(利益)' },
+      { id: 44, hanja: '朝', hun: '아침', eum: '조', full: '아침 조', hint: '조삼모사(朝三暮四): 눈앞의 차이만 알고 결과가 같음을 모름' },
+      { id: 45, hanja: '戰', hun: '싸우다', eum: '전', full: '싸우다 전', hint: '전쟁(戰爭), 백전백승(百戰百勝)' },
+      { id: 46, hanja: '暮', hun: '저물다', eum: '모', full: '저물다 모', hint: '조삼모사(朝三暮四)' },
+      { id: 47, hanja: '咸', hun: '모두', eum: '함', full: '모두 함', hint: '함흥차사(咸興差使): 심부름 간 사람이 소식이 없거나 늦음' },
+      { id: 48, hanja: '治', hun: '다스리다', eum: '치', full: '다스리다 치', hint: '정치(政治), 치료(治療)' },
+
+      { id: 49, hanja: '興', hun: '일다', eum: '흥', full: '일다 흥', hint: '함흥차사(咸興差使), 흥망성쇠(興亡盛衰)' },
+      { id: 50, hanja: '差', hun: '다르다, 사신보내다', eum: '차', full: '다르다, 사신보내다 차', hint: '함흥차사(咸興差使), 차이(差異)' },
+      { id: 51, hanja: '使', hun: '부리다, 사신', eum: '사', full: '부리다, 사신 사', hint: '함흥차사(咸興差使), 사용(使用)' },
+      { id: 52, hanja: '鷄', hun: '닭', eum: '계', full: '닭 계', hint: '계란유골(鷄卵有骨): 운이 나쁜 사람은 모처럼 좋은 기회도 안 풀림' },
+      { id: 53, hanja: '卵', hun: '알', eum: '란', full: '알 란', hint: '계란유골(鷄卵有骨), 산란(産卵)' },
+      { id: 54, hanja: '熱', hun: '덥다', eum: '열', full: '덥다 열', hint: '열정(熱情), 가열(加熱)' },
+      { id: 55, hanja: '骨', hun: '뼈', eum: '골', full: '뼈 골', hint: '계란유골(鷄卵有骨), 골격(骨格)' },
+      { id: 56, hanja: '常', hun: '항상', eum: '상', full: '항상 상', hint: '일상(日常), 항상(恒常)' },
+      { id: 57, hanja: '器', hun: '그릇', eum: '기', full: '그릇 기', hint: '대기만성(大器晩成): 큰 그릇은 늦게 이루어짐' },
+      { id: 58, hanja: '晩', hun: '늦다', eum: '만', full: '늦다 만', hint: '대기만성(大器晩成), 만추(晩秋)' },
+      { id: 59, hanja: '成', hun: '이루다', eum: '성', full: '이루다 성', hint: '대기만성(大器晩成), 성공(成功)' },
+      { id: 60, hanja: '仁', hun: '어질다', eum: '인', full: '어질다 인', hint: '인자무적(仁者無敵): 어진 사람에게는 적이 없음' },
+      { id: 61, hanja: '者', hun: '사람', eum: '자', full: '사람 자', hint: '인자무적(仁者無敵), 과학자(科學者)' },
+      { id: 62, hanja: '無', hun: '없다', eum: '무', full: '없다 무', hint: '인자무적(仁者無敵), 무궁화(無窮花)' },
+      { id: 63, hanja: '敵', hun: '적', eum: '적', full: '적 적', hint: '인자무적(仁者無敵), 대적(對敵)' },
+      { id: 64, hanja: '西', hun: '서녘', eum: '서', full: '서녘 서', hint: '동서남북(東西南北)' },
+
+      { id: 65, hanja: '欲', hun: '하고자하다', eum: '욕', full: '하고자하다 욕', hint: '욕승물필선자승(欲勝物必先自勝): 남을 이기려면 먼저 자신을 이겨야 함' },
+      { id: 66, hanja: '勝', hun: '이기다', eum: '승', full: '이기다 승', hint: '승리(勝利), 필승(必勝)' },
+      { id: 67, hanja: '物', hun: '물건', eum: '물', full: '물건 물', hint: '만물(萬物), 동물(動物)' },
+      { id: 68, hanja: '必', hun: '반드시', eum: '필', full: '반드시 필', hint: '필수(必須), 필승(必勝)' },
+      { id: 69, hanja: '先', hun: '먼저', eum: '선', full: '먼저 선', hint: '선배(先輩), 우선(優先)' },
+      { id: 70, hanja: '自', hun: '스스로', eum: '자', full: '스스로 자', hint: '자신(自信), 자유(自由)' },
+      { id: 71, hanja: '登', hun: '오르다', eum: '등', full: '오르다 등', hint: '등산(登山), 등교(登校)' },
+      { id: 72, hanja: '高', hun: '높다', eum: '고', full: '높다 고', hint: '고산(高山), 최고(最高)' },
+      { id: 73, hanja: '由', hun: '말미암다', eum: '유', full: '말미암다 유', hint: '이유(理由), 자유(自由)' },
+      { id: 74, hanja: '道', hun: '길', eum: '도', full: '길 도', hint: '도로(道路), 도리(道理)' },
+      { id: 75, hanja: '也', hun: '어조사', eum: '야', full: '어조사 야', hint: '문장의 끝에 쓰이는 어조사' },
+      { id: 76, hanja: '思', hun: '생각', eum: '사', full: '생각 사', hint: '사고(思考), 역지사지(易地思之)' },
+      { id: 77, hanja: '想', hun: '생각', eum: '상', full: '생각 상', hint: '사상(思想), 상상(想像)' },
+      { id: 78, hanja: '支', hun: '가지', eum: '지', full: '가지 지', hint: '지원(支援), 지탱(支撐)' },
+      { id: 79, hanja: '持', hun: '가지다', eum: '지', full: '가지다 지', hint: '유지(維持), 지지(支持)' },
+      { id: 80, hanja: '陵', hun: '언덕', eum: '릉', full: '언덕 릉', hint: '구릉(丘陵), 왕릉(王陵)' },
+
+      { id: 81, hanja: '權', hun: '권세', eum: '권', full: '권세 권', hint: '권리(權利), 주권(主權)' },
+      { id: 82, hanja: '指', hun: '가리키다', eum: '지', full: '가리키다 지', hint: '지시(指示), 지도(指導)' },
+      { id: 83, hanja: '尊', hun: '높다', eum: '존', full: '높다 존', hint: '존경(尊敬), 자존심(自尊心)' },
+      { id: 84, hanja: '重', hun: '무겁다', eum: '중', full: '무겁다 중', hint: '중요(重要), 체중(體重)' },
+      { id: 85, hanja: '平', hun: '평평하다', eum: '평', full: '평평하다 평', hint: '평화(平和), 평등(平等)' },
+      { id: 86, hanja: '和', hun: '화목하다', eum: '화', full: '화목하다 화', hint: '평화(平和), 화합(和合)' },
+      { id: 87, hanja: '幸', hun: '다행', eum: '행', full: '다행 행', hint: '행복(幸福), 다행(多幸)' },
+      { id: 88, hanja: '福', hun: '복', eum: '복', full: '복 복', hint: '행복(幸福), 축복(祝福)' },
+      { id: 89, hanja: '于', hun: '어조사', eum: '우', full: '어조사 우', hint: '우산국(于山國): 울릉도와 독도의 옛 이름' },
+      { id: 90, hanja: '武', hun: '무사', eum: '무', full: '무사 무', hint: '무릉(武陵), 문무(文武)' },
+      { id: 91, hanja: '陸', hun: '뭍', eum: '륙', full: '뭍 륙', hint: '대륙(大陸), 육지(陸地)' },
+      { id: 92, hanja: '島', hun: '섬', eum: '도', full: '섬 도', hint: '독도(獨島), 한반도(韓半島)' },
+      { id: 93, hanja: '左', hun: '왼쪽', eum: '좌', full: '왼쪽 좌', hint: '좌우(左右)' },
+      { id: 94, hanja: '縣', hun: '매달다', eum: '현', full: '매달다 현', hint: '군현(郡縣), 현수막(懸垂幕)' },
+      { id: 95, hanja: '正', hun: '바르다', eum: '정', full: '바르다 정', hint: '정의(正義), 정확(正確)' },
+      { id: 96, hanja: '冊', hun: '책', eum: '책', full: '책 책', hint: '책상(冊床), 명책(名冊)' },
+
+      { id: 97, hanja: '東', hun: '동녘', eum: '동', full: '동녘 동', hint: '동해(東海), 동서남북(東西南北)' },
+      { id: 98, hanja: '獨', hun: '홀로', eum: '독', full: '홀로 독', hint: '독도(獨島), 독립(獨立)' },
+      { id: 99, hanja: '表', hun: '겉', eum: '표', full: '겉 표', hint: '표시(表示), 대표(代表)' },
+      { id: 100, hanja: '去', hun: '가다', eum: '거', full: '가다 거', hint: '과거(過去), 거취(去就)' },
+      { id: 101, hanja: '別', hun: '다르다', eum: '별', full: '다르다 별', hint: '이별(離別), 구별(區別)' },
+      { id: 102, hanja: '風', hun: '바람', eum: '풍', full: '바람 풍', hint: '풍경(風景), 태풍(颱風)' },
+      { id: 103, hanja: '認', hun: '알다', eum: '인', full: '알다 인', hint: '인정(認定), 확인(確認)' },
+      { id: 104, hanja: '淸', hun: '맑다', eum: '청', full: '맑다 청', hint: '청정(淸淨), 청소(淸掃)' },
+      { id: 105, hanja: '定', hun: '정하다', eum: '정', full: '정하다 정', hint: '결정(決定), 안정(安定)' },
+      { id: 106, hanja: '則', hun: '법칙 칙, 곧', eum: '즉', full: '법칙 칙, 곧 즉', hint: '규칙(規則), 법칙(法則)' },
+      { id: 107, hanja: '可', hun: '옳다, ~할 수 있다', eum: '가', full: '옳다, ~할 수 있다 가', hint: '가능(可能), 허가(許可)' },
+      { id: 108, hanja: '望', hun: '바라다', eum: '망', full: '바라다 망', hint: '희망(希望), 전망(展望)' },
+      { id: 109, hanja: '見', hun: '보다', eum: '견', full: '보다 견', hint: '의견(意見), 발견(發見)' },
+      { id: 110, hanja: '省', hun: '살피다', eum: '성', full: '살피다 성', hint: '반성(反省), 일일삼성(一日三省)' },
+      { id: 111, hanja: '吾', hun: '나', eum: '오', full: '나 오', hint: '오일삼성오신(吾日三省吾身): 날마다 세 번 내 몸을 반성함' },
+      { id: 112, hanja: '在', hun: '있다', eum: '재', full: '있다 재', hint: '존재(存在), 현재(現在)' },
+
+      { id: 113, hanja: '身', hun: '몸', eum: '신', full: '몸 신', hint: '신체(身體), 수신(修身)' },
+      { id: 114, hanja: '克', hun: '이기다', eum: '극', full: '이기다 극', hint: '극기복례(克己復禮): 욕심을 이기고 예의로 돌아감' },
+      { id: 115, hanja: '復', hun: '회복하다', eum: '복', full: '회복하다 복', hint: '극기복례(克己復禮), 회복(回復)' },
+      { id: 116, hanja: '禮', hun: '예도', eum: '례', full: '예도 례', hint: '극기복례(克己復禮), 예의(禮儀)' },
+      { id: 117, hanja: '反', hun: '돌아오다', eum: '반', full: '돌아오다 반', hint: '반구저기(反求諸己): 잘못의 원인을 자기에게서 찾음' },
+      { id: 118, hanja: '求', hun: '구하다', eum: '구', full: '구하다 구', hint: '반구저기(反求諸己), 탐구(探究)' },
+      { id: 119, hanja: '諸', hun: '어조사', eum: '제', full: '어조사 제', hint: '반구저기(反求諸己)' },
+      { id: 120, hanja: '他', hun: '다르다', eum: '타', full: '다르다 타', hint: '타산지석(他山之石): 남의 잘못도 나의 수양에 도움이 됨' },
+      { id: 121, hanja: '石', hun: '돌', eum: '석', full: '돌 석', hint: '타산지석(他山之石), 석탑(石塔)' },
+      { id: 122, hanja: '足', hun: '발, 만족하다', eum: '족', full: '발, 만족하다 족', hint: '만족(滿足), 지족(知足)' },
+      { id: 123, hanja: '富', hun: '부유하다', eum: '부', full: '부유하다 부', hint: '부귀(富貴), 풍부(豐富)' },
+      { id: 124, hanja: '貴', hun: '귀하다', eum: '귀', full: '귀하다 귀', hint: '부귀(富貴), 귀중(貴重)' },
+      { id: 125, hanja: '亦', hun: '또', eum: '역', full: '또 역', hint: '역시(亦是)' },
+      { id: 126, hanja: '憂', hun: '근심', eum: '우', full: '근심 우', hint: '우려(憂慮), 선우후락(先憂後樂)' },
+      { id: 127, hanja: '勸', hun: '권하다', eum: '권', full: '권하다 권', hint: '권유(勸誘), 권장(勸獎)' },
+      { id: 128, hanja: '遠', hun: '멀다', eum: '원', full: '멀다 원', hint: '원근(遠近), 영원(永遠)' },
+
+      { id: 129, hanja: '勉', hun: '힘쓰다', eum: '면', full: '힘쓰다 면', hint: '근면(勤勉), 면학(勉學)' },
+      { id: 130, hanja: '變', hun: '변하다', eum: '변', full: '변하다 변', hint: '변화(變化), 변경(變更)' },
+      { id: 131, hanja: '化', hun: '되다', eum: '화', full: '되다 화', hint: '변화(變化), 문화(文化)' },
+      { id: 132, hanja: '慈', hun: '사랑하다', eum: '자', full: '사랑하다 자', hint: '자애(慈愛), 부자자효(父慈子孝)' },
+      { id: 133, hanja: '孝', hun: '효도', eum: '효', full: '효도 효', hint: '효도(孝道), 효자(孝子)' },
+      { id: 134, hanja: '記', hun: '기록하다', eum: '기', full: '기록하다 기', hint: '기록(記錄), 기억(記憶)' },
+      { id: 135, hanja: '領', hun: '거느리다', eum: '령', full: '거느리다 령', hint: '대통령(大統領), 영토(領土)' },
+      { id: 136, hanja: '恭', hun: '공손하다', eum: '공', full: '공손하다 공', hint: '공손(恭遜), 공경(恭敬)' },
+      { id: 137, hanja: '出', hun: '나가다', eum: '출', full: '나가다 출', hint: '출필곡(出必告): 나갈 때는 반드시 부모님께 아룀' },
+      { id: 138, hanja: '告', hun: '아뢰다, 고하다', eum: '고', full: '아뢰다, 고하다 고', hint: '출필곡(出必告), 보고(報告)' },
+      { id: 139, hanja: '樹', hun: '나무', eum: '수', full: '나무 수', hint: '수욕정이풍부지(樹欲靜而風不止): 효도를 다하려 할 때 부모님은 기다려주지 않음' },
+      { id: 140, hanja: '靜', hun: '고요하다', eum: '정', full: '고요하다 정', hint: '정숙(靜肅), 수욕정이풍부지(樹欲靜而風不止)' },
+      { id: 141, hanja: '而', hun: '말잇다', eum: '이', full: '말잇다 이', hint: '접속사 역할을 하는 어조사' },
+      { id: 142, hanja: '止', hun: '그치다', eum: '지', full: '그치다 지', hint: '중지(中止), 금지(禁止)' },
+      { id: 143, hanja: '養', hun: '기르다, 봉양하다', eum: '양', full: '기르다, 봉양하다 양', hint: '봉양(奉養), 양육(養育)' },
+      { id: 144, hanja: '察', hun: '살피다', eum: '찰', full: '살피다 찰', hint: '관찰(觀察), 경찰(警察)' },
+
+      { id: 145, hanja: '親', hun: '친하다, 어버이', eum: '친', full: '친하다, 어버이 친', hint: '부모(父母)·양친(兩親), 친구(親舊)' },
+      { id: 146, hanja: '待', hun: '기다리다', eum: '대', full: '기다리다 대', hint: '대기(待機), 기대(期待)' },
+      { id: 147, hanja: '易', hun: '쉽다 이, 바꾸다', eum: '역', full: '쉽다 이, 바꾸다 역', hint: '역지사지(易地思之): 처지를 바꾸어 생각함' },
+      { id: 148, hanja: '善', hun: '착하다, 좋다, 잘', eum: '선', full: '착하다, 좋다, 잘 선', hint: '상선약수(上善若水): 최고의 선은 물과 같음' },
+      { id: 149, hanja: '若', hun: '만약, 같다', eum: '약', full: '만약, 같다 약', hint: '상선약수(上善若水), 약관(弱冠)' },
+      { id: 150, hanja: '陰', hun: '그늘', eum: '음', full: '그늘 음', hint: '음덕양보(陰德陽報): 남모르게 덕을 베풀면 반드시 보답을 받음' },
+      { id: 151, hanja: '德', hun: '덕', eum: '덕', full: '덕 덕', hint: '음덕양보(陰德陽報), 도덕(道德)' },
+      { id: 152, hanja: '陽', hun: '볕', eum: '양', full: '볕 양', hint: '음덕양보(陰德陽報), 태양(太陽)' },
+      { id: 153, hanja: '所', hun: '~바, 장소', eum: '소', full: '~바, 장소 소', hint: '기소불욕(己所不欲): 자기가 원하지 않는 바' },
+      { id: 154, hanja: '勿', hun: '~하지마라', eum: '물', full: '~하지마라 물', hint: '물시어인(勿施於人): 남에게 베풀지 마라' },
+      { id: 155, hanja: '施', hun: '베풀다', eum: '시', full: '베풀다 시', hint: '물시어인(勿施於人), 봉사(奉仕)·시행(施行)' },
+      { id: 156, hanja: '於', hun: '어조사', eum: '어', full: '어조사 어', hint: '물시어인(勿施於人)' },
+      { id: 157, hanja: '愛', hun: '사랑', eum: '애', full: '사랑 애', hint: '애정(愛情), 애국(愛國)' },
+      { id: 158, hanja: '恒', hun: '항상', eum: '항', full: '항상 항', hint: '항상(恒常), 항심(恒心)' },
+      { id: 159, hanja: '立', hun: '서다', eum: '립', full: '서다 립', hint: '독립(獨立), 수립(樹立)' },
+      { id: 160, hanja: '峯', hun: '봉우리', eum: '봉', full: '봉우리 봉', hint: '산봉우리, 최고봉(最高峯)' }
+    ];
+
+    // 각 한자에 단원 정보 매핑
+    HANJA_DATA.forEach(item => {
+      const unit = UNITS.find(u => item.id >= u.start && item.id <= u.end);
+      item.unitId = unit ? unit.id : 'u11';
+      item.unitName = unit ? unit.name : '11과. 친구와 함께';
+    });
+
+    /**
+     * =========================================================================
+     * 2. 앱 상태 관리 & 로컬 스토리지
+     * =========================================================================
+     */
+    const STORAGE_KEY = 'jingwan_hanja_160_v1';
+
+    let appState = {
+      statusMap: {}, // { [id]: 'mastered' | 'review' }
+      soundEnabled: true
+    };
+
+    // 플래시카드 상태
+    let deck = [...HANJA_DATA];
+    let currentCardIdx = 0;
+    let isFlipped = false;
+    let isReverseMode = false; // false: 한자->뜻, true: 뜻->한자
+
+    // 퀴즈 상태
+    let quizConfig = {
+      type: 'hanja2meaning',
+      count: 10
+    };
+    let quizSession = {
+      questions: [],
+      currentIndex: 0,
+      score: 0,
+      streak: 0,
+      wrongItems: [],
+      answered: false
+    };
+
+    // 전체표 상태
+    let listUnitFilter = 'all';
+    let isBlindMeaning = false;
+    let revealedSet = new Set();
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          appState.statusMap = parsed.statusMap || {};
+          appState.soundEnabled = parsed.soundEnabled !== undefined ? parsed.soundEnabled : true;
+        }
+      } catch (e) {
+        console.error('상태 불러오기 오류:', e);
+      }
+      updateSoundIcon();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('상태 저장 오류:', e);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 3. 효과음 (Web Audio API) & 한국어 발음 TTS
+     * =========================================================================
+     */
+    let audioCtx = null;
+
+    function playTone(type) {
+      if (!appState.soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'flip') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(480, now + 0.08);
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          osc.start(now);
+          osc.stop(now + 0.09);
+        } else if (type === 'success') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.09); // E5
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(200, now);
+          osc.frequency.linearRampToValueAtTime(150, now + 0.18);
+          gain.gain.setValueAtTime(0.07, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        }
+      } catch (e) {
+        // 오디오 차단 환경 무시
+      }
+    }
+
+    function toggleSound() {
+      appState.soundEnabled = !appState.soundEnabled;
+      saveState();
+      updateSoundIcon();
+      showToast(appState.soundEnabled ? '효과음이 켜졌습니다' : '효과음이 꺼졌습니다');
+    }
+
+    function updateSoundIcon() {
+      const icon = document.getElementById('soundIcon');
+      if (icon) {
+        icon.className = appState.soundEnabled
+          ? 'ph ph-speaker-high text-lg text-ink-900'
+          : 'ph ph-speaker-slash text-lg text-slate-400';
+      }
+    }
+
+    function speakCurrentHanja() {
+      const item = deck[currentCardIdx];
+      if (!item || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(item.full.replace(/~/g, ''));
+      utter.lang = 'ko-KR';
+      utter.rate = 0.95;
+      window.speechSynthesis.speak(utter);
+    }
+
+    /**
+     * =========================================================================
+     * 4. 탭 네비게이션 & 홈 대시보드 렌더링
+     * =========================================================================
+     */
+    function switchTab(tabName) {
+      ['home', 'cards', 'quiz', 'list'].forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        if (el) el.classList.toggle('hidden', t !== tabName);
+      });
+
+      // 데스크톱 탭 활성화 스타일
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        const active = btn.dataset.tab === tabName;
+        btn.className = active
+          ? 'nav-tab flex-1 py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition bg-ink-900 text-white shadow-xs'
+          : 'nav-tab flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition text-slate-600 hover:bg-hanji-100';
+      });
+
+      // 모바일 하단 탭 활성화 스타일
+      document.querySelectorAll('.nav-tab-mobile').forEach(btn => {
+        const active = btn.dataset.tab === tabName;
+        btn.className = active
+          ? 'nav-tab-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold transition text-seal-600 bg-red-50/70'
+          : 'nav-tab-mobile flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-medium transition text-slate-500';
+      });
+
+      if (tabName === 'home') renderHomeDashboard();
+      if (tabName === 'cards') renderFlashcard();
+      if (tabName === 'list') renderFullList();
+    }
+
+    function renderHomeDashboard() {
+      let mastered = 0;
+      let review = 0;
+      HANJA_DATA.forEach(item => {
+        const st = appState.statusMap[item.id];
+        if (st === 'mastered') mastered++;
+        else if (st === 'review') review++;
+      });
+      const unseen = HANJA_DATA.length - mastered - review;
+      const pct = Math.round((mastered / HANJA_DATA.length) * 100);
+
+      document.getElementById('homeMasteredCount').textContent = mastered;
+      document.getElementById('homeMasteredPercent').textContent = `${pct}%`;
+      document.getElementById('statMastered').textContent = mastered;
+      document.getElementById('statReview').textContent = review;
+      document.getElementById('statUnseen').textContent = unseen;
+      document.getElementById('btnReviewCount').textContent = review;
+
+      document.getElementById('barMastered').style.width = `${(mastered / 160) * 100}%`;
+      document.getElementById('barReview').style.width = `${(review / 160) * 100}%`;
+
+      // 단원별 카드 렌더링
+      const unitContainer = document.getElementById('unitProgressList');
+      unitContainer.innerHTML = UNITS.map(u => {
+        const items = HANJA_DATA.filter(x => x.unitId === u.id);
+        const mCount = items.filter(x => appState.statusMap[x.id] === 'mastered').length;
+        const uPct = Math.round((mCount / items.length) * 100);
+        return `
+          <button onclick="openUnitInCards('${u.id}')"
+            class="p-3.5 rounded-2xl border border-hanji-200 bg-hanji-50/60 hover:bg-hanji-100 text-left transition active:scale-[0.99] flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-ink-900">${u.name}</span>
+              <span class="text-[11px] font-bold ${uPct === 100 ? 'text-emerald-600' : 'text-slate-500'}">${mCount}/${items.length}자</span>
+            </div>
+            <div class="w-full h-1.5 bg-hanji-200 rounded-full overflow-hidden">
+              <div class="bg-emerald-500 h-full transition-all" style="width: ${uPct}%"></div>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function openUnitInCards(unitId) {
+      document.getElementById('cardUnitFilter').value = unitId;
+      document.getElementById('cardStatusFilter').value = 'all';
+      applyCardFilters();
+      switchTab('cards');
+    }
+
+    function startRecommendedStudy(mode) {
+      document.getElementById('cardUnitFilter').value = 'all';
+      if (mode === 'review') {
+        const hasReview = HANJA_DATA.some(x => appState.statusMap[x.id] === 'review');
+        if (!hasReview) {
+          showToast('현재 헷갈림으로 표시된 카드가 없습니다!');
+          return;
+        }
+        document.getElementById('cardStatusFilter').value = 'review';
+      } else {
+        document.getElementById('cardStatusFilter').value = 'unmastered';
+      }
+      applyCardFilters();
+      switchTab('cards');
+    }
+
+    /**
+     * =========================================================================
+     * 5. 플래시카드 기능 (터치 플립, 스와이프, 필터, 암기 체크)
+     * =========================================================================
+     */
+    function applyCardFilters() {
+      const unitVal = document.getElementById('cardUnitFilter').value;
+      const statusVal = document.getElementById('cardStatusFilter').value;
+
+      deck = HANJA_DATA.filter(item => {
+        const unitMatch = unitVal === 'all' || item.unitId === unitVal;
+        const st = appState.statusMap[item.id] || 'unseen';
+        let statusMatch = true;
+        if (statusVal === 'unmastered') statusMatch = st !== 'mastered';
+        else if (statusVal === 'review') statusMatch = st === 'review';
+        else if (statusVal === 'mastered') statusMatch = st === 'mastered';
+        return unitMatch && statusMatch;
+      });
+
+      currentCardIdx = 0;
+      isFlipped = false;
+      renderFlashcard();
+    }
+
+    function resetCardFilters() {
+      document.getElementById('cardUnitFilter').value = 'all';
+      document.getElementById('cardStatusFilter').value = 'all';
+      applyCardFilters();
+    }
+
+    function shuffleDeck() {
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      currentCardIdx = 0;
+      isFlipped = false;
+      renderFlashcard('right');
+      showToast('카드를 무작위로 섞었습니다');
+    }
+
+    function toggleReverseMode() {
+      isReverseMode = !isReverseMode;
+      isFlipped = false;
+      const label = document.getElementById('reverseModeLabel');
+      const btn = document.getElementById('reverseModeBtn');
+      if (isReverseMode) {
+        label.textContent = '뜻 → 한자';
+        btn.classList.add('border-seal-500', 'text-seal-600', 'bg-red-50');
+      } else {
+        label.textContent = '한자 → 뜻';
+        btn.classList.remove('border-seal-500', 'text-seal-600', 'bg-red-50');
+      }
+      renderFlashcard();
+    }
+
+    function renderFlashcard(slideDir = null) {
+      const emptyState = document.getElementById('emptyDeckState');
+      const cardArea = document.getElementById('flashcardArea');
+
+      if (deck.length === 0) {
+        emptyState.classList.remove('hidden');
+        cardArea.classList.add('hidden');
+        document.getElementById('cardCounterText').textContent = '0';
+        document.getElementById('cardTotalText').textContent = '0';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      cardArea.classList.remove('hidden');
+
+      if (currentCardIdx >= deck.length) currentCardIdx = 0;
+      if (currentCardIdx < 0) currentCardIdx = deck.length - 1;
+
+      const item = deck[currentCardIdx];
+      const st = appState.statusMap[item.id] || 'unseen';
+
+      // 카운터 업데이트
+      document.getElementById('cardCounterText').textContent = currentCardIdx + 1;
+      document.getElementById('cardTotalText').textContent = deck.length;
+
+      // 플립 초기화
+      const inner = document.getElementById('flipCardInner');
+      inner.classList.toggle('is-flipped', isFlipped);
+
+      // 슬라이드 애니메이션 적용
+      const swipeZone = document.getElementById('cardSwipeZone');
+      swipeZone.classList.remove('animate-slide-right', 'animate-slide-left');
+      if (slideDir) {
+        void swipeZone.offsetWidth; // reflow
+        swipeZone.classList.add(slideDir === 'right' ? 'animate-slide-right' : 'animate-slide-left');
+      }
+
+      // 앞면 데이터 바인딩
+      const numStr = `No. ${String(item.id).padStart(3, '0')}`;
+      document.getElementById('frontNumber').textContent = numStr;
+      document.getElementById('frontUnit').textContent = item.unitName;
+
+      const badge = document.getElementById('frontStatusBadge');
+      if (st === 'mastered') {
+        badge.textContent = '암기 완료';
+        badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700';
+      } else if (st === 'review') {
+        badge.textContent = '헷갈림';
+        badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+      } else {
+        badge.textContent = '미학습';
+        badge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600';
+      }
+
+      // 앞/뒷면 모드 분기 (한자->뜻 vs 뜻->한자)
+      const frontHanjaBox = document.getElementById('frontHanjaBox');
+      const frontReverseText = document.getElementById('frontReverseText');
+      const backReverseHanja = document.getElementById('backReverseHanja');
+
+      if (isReverseMode) {
+        frontHanjaBox.classList.add('hidden');
+        frontReverseText.classList.remove('hidden');
+        document.getElementById('frontMeaningBig').textContent = item.full;
+        backReverseHanja.classList.remove('hidden');
+        backReverseHanja.textContent = item.hanja;
+      } else {
+        frontHanjaBox.classList.remove('hidden');
+        frontReverseText.classList.add('hidden');
+        document.getElementById('frontMainText').textContent = item.hanja;
+        backReverseHanja.classList.add('hidden');
+      }
+
+      // 뒷면 데이터 바인딩
+      document.getElementById('backNumber').textContent = numStr;
+      document.getElementById('backMiniHanja').textContent = item.hanja;
+      document.getElementById('backFullReading').innerHTML = `${item.hun} <span class="text-seal-600">${item.eum}</span>`;
+      document.getElementById('backHun').textContent = item.hun;
+      document.getElementById('backEum').textContent = item.eum;
+      document.getElementById('backHintText').textContent = item.hint;
+    }
+
+    function flipCard() {
+      isFlipped = !isFlipped;
+      document.getElementById('flipCardInner').classList.toggle('is-flipped', isFlipped);
+      playTone('flip');
+    }
+
+    function nextCard() {
+      if (deck.length === 0) return;
+      isFlipped = false;
+      currentCardIdx = (currentCardIdx + 1) % deck.length;
+      renderFlashcard('right');
+    }
+
+    function prevCard() {
+      if (deck.length === 0) return;
+      isFlipped = false;
+      currentCardIdx = (currentCardIdx - 1 + deck.length) % deck.length;
+      renderFlashcard('left');
+    }
+
+    function markCard(status) {
+      if (deck.length === 0) return;
+      const item = deck[currentCardIdx];
+      appState.statusMap[item.id] = status;
+      saveState();
+
+      if (status === 'mastered') {
+        playTone('success');
+      } else {
+        playTone('flip');
+        // '헷갈려요' 선택 시 현재 덱 뒤쪽에 한 번 더 삽입하여 간격 반복 유도
+        if (deck.length > 2) {
+          const reinsertPos = Math.min(currentCardIdx + 4, deck.length);
+          deck.splice(reinsertPos, 0, item);
+        }
+      }
+
+      // 만약 현재 필터가 'unmastered'인데 'mastered'로 체크했다면 덱에서 제거
+      const statusVal = document.getElementById('cardStatusFilter').value;
+      if (statusVal === 'unmastered' && status === 'mastered') {
+        deck.splice(currentCardIdx, 1);
+        isFlipped = false;
+        renderFlashcard('right');
+      } else {
+        nextCard();
+      }
+    }
+
+    // 터치 스와이프 제스처 등록
+    (function setupSwipeGestures() {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      const zone = document.getElementById('cardSwipeZone');
+      if (!zone) return;
+
+      zone.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      zone.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        const dy = e.changedTouches[0].screenY - touchStartY;
+        if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+          if (dx < 0) nextCard();
+          else prevCard();
+        }
+      }, { passive: true });
+    })();
+
+    // 키보드 단축키 지원 (스페이스바 뒤집기, 좌우 화살표 이동)
+    document.addEventListener('keydown', e => {
+      const cardsTabVisible = !document.getElementById('tab-cards').classList.contains('hidden');
+      if (!cardsTabVisible) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        flipCard();
+      } else if (e.code === 'ArrowRight') {
+        nextCard();
+      } else if (e.code === 'ArrowLeft') {
+        prevCard();
+      }
+    });
+
+    /**
+     * =========================================================================
+     * 6. 실전 퀴즈 기능 (객관식 2종 + 주관식 1종)
+     * =========================================================================
+     */
+    function selectQuizType(type) {
+      quizConfig.type = type;
+      document.querySelectorAll('.qtype-btn').forEach(btn => {
+        const active = btn.dataset.qtype === type;
+        btn.className = active
+          ? 'qtype-btn p-3 rounded-xl border-2 border-seal-500 bg-red-50/50 text-left transition'
+          : 'qtype-btn p-3 rounded-xl border-2 border-hanji-200 bg-white text-left transition';
+      });
+    }
+
+    function selectQuizCount(count) {
+      quizConfig.count = count;
+      document.querySelectorAll('.qcount-btn').forEach(btn => {
+        const active = Number(btn.dataset.qcount) === count;
+        btn.className = active
+          ? 'qcount-btn py-2.5 rounded-xl border-2 border-seal-500 bg-red-50/50 text-sm font-bold text-seal-600'
+          : 'qcount-btn py-2.5 rounded-xl border-2 border-hanji-200 bg-white text-sm font-bold text-slate-700';
+      });
+    }
+
+    function startQuiz() {
+      const scope = document.getElementById('quizScopeSelect').value;
+      let pool = HANJA_DATA.filter(item => {
+        if (scope === 'all') return true;
+        if (scope === 'review') return appState.statusMap[item.id] === 'review';
+        if (scope === 'unmastered') return appState.statusMap[item.id] !== 'mastered';
+        return item.unitId === scope;
+      });
+
+      if (pool.length === 0) {
+        showToast('선택한 범위에 해당하는 한자가 없습니다!');
+        return;
+      }
+
+      // 셔플 후 문항 수 제한
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, Math.min(quizConfig.count, shuffled.length));
+
+      quizSession = {
+        questions: selected,
+        currentIndex: 0,
+        score: 0,
+        streak: 0,
+        wrongItems: [],
+        answered: false
+      };
+
+      document.getElementById('quizSetupView').classList.add('hidden');
+      document.getElementById('quizResultView').classList.add('hidden');
+      document.getElementById('quizPlayView').classList.remove('hidden');
+
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const q = quizSession.questions[quizSession.currentIndex];
+      const total = quizSession.questions.length;
+      quizSession.answered = false;
+
+      document.getElementById('quizCurrentNum').textContent = quizSession.currentIndex + 1;
+      document.getElementById('quizTotalNum').textContent = total;
+      document.getElementById('quizScoreNum').textContent = quizSession.score;
+      document.getElementById('quizProgressBar').style.width = `${((quizSession.currentIndex + 1) / total) * 100}%`;
+      document.getElementById('quizQuestionTag').textContent = `No. ${String(q.id).padStart(3, '0')} · ${q.unitName}`;
+
+      const streakBadge = document.getElementById('quizStreakBadge');
+      if (quizSession.streak >= 2) {
+        streakBadge.textContent = `🔥 ${quizSession.streak}연속 정답!`;
+        streakBadge.classList.remove('hidden');
+      } else {
+        streakBadge.classList.add('hidden');
+      }
+
+      const promptBox = document.getElementById('quizPromptContainer');
+      const optionsGrid = document.getElementById('quizOptionsGrid');
+      const typingForm = document.getElementById('quizTypingForm');
+      const feedbackBox = document.getElementById('quizFeedbackBox');
+
+      feedbackBox.classList.add('hidden');
+
+      if (quizConfig.type === 'hanja2meaning') {
+        promptBox.innerHTML = `<div class="font-hanja text-7xl sm:text-8xl font-bold text-ink-900">${q.hanja}</div>`;
+        optionsGrid.classList.remove('hidden');
+        typingForm.classList.add('hidden');
+        renderMultipleChoice(q, 'meaning');
+      } else if (quizConfig.type === 'meaning2hanja') {
+        promptBox.innerHTML = `<div class="text-2xl sm:text-3xl font-extrabold text-ink-900 py-4 break-keep">${q.full}</div>`;
+        optionsGrid.classList.remove('hidden');
+        typingForm.classList.add('hidden');
+        renderMultipleChoice(q, 'hanja');
+      } else {
+        promptBox.innerHTML = `<div class="font-hanja text-7xl sm:text-8xl font-bold text-ink-900">${q.hanja}</div>`;
+        optionsGrid.classList.add('hidden');
+        typingForm.classList.remove('hidden');
+        const input = document.getElementById('quizTypingInput');
+        input.value = '';
+        input.disabled = false;
+        document.getElementById('quizTypingSubmitBtn').classList.remove('hidden');
+        setTimeout(() => input.focus(), 80);
+      }
+    }
+
+    function renderMultipleChoice(correctItem, mode) {
+      // 오답 보기 3개 추출 (동일 음 또는 무작위 섞기)
+      const distractors = HANJA_DATA
+        .filter(item => item.id !== correctItem.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+
+      const choices = [correctItem, ...distractors].sort(() => Math.random() - 0.5);
+      const grid = document.getElementById('quizOptionsGrid');
+
+      grid.innerHTML = choices.map(choice => {
+        const label = mode === 'meaning'
+          ? `<span class="font-bold text-base text-ink-900">${choice.full}</span>`
+          : `<span class="font-hanja text-3xl font-bold text-ink-900 block text-center">${choice.hanja}</span>`;
+
+        return `
+          <button type="button" onclick="handleChoiceAnswer(${choice.id}, this)"
+            class="quiz-choice-btn p-4 rounded-2xl border-2 border-hanji-200 bg-hanji-50/40 hover:bg-hanji-100 transition active:scale-[0.98]">
+            ${label}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function handleChoiceAnswer(selectedId, btnEl) {
+      if (quizSession.answered) return;
+      quizSession.answered = true;
+
+      const q = quizSession.questions[quizSession.currentIndex];
+      const isCorrect = selectedId === q.id;
+
+      document.querySelectorAll('.quiz-choice-btn').forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        btnEl.classList.remove('border-hanji-200', 'bg-hanji-50/40');
+        btnEl.classList.add('border-emerald-500', 'bg-emerald-50');
+      } else {
+        btnEl.classList.remove('border-hanji-200', 'bg-hanji-50/40');
+        btnEl.classList.add('border-red-500', 'bg-red-50');
+      }
+
+      finalizeQuizAnswer(isCorrect, q);
+    }
+
+    function submitTypingAnswer(e) {
+      e.preventDefault();
+      if (quizSession.answered) return;
+
+      const input = document.getElementById('quizTypingInput');
+      const userVal = input.value.trim().replace(/\s+/g, '');
+      if (!userVal) {
+        showToast('뜻과 음을 입력해 주세요!');
+        return;
+      }
+
+      quizSession.answered = true;
+      input.disabled = true;
+      document.getElementById('quizTypingSubmitBtn').classList.add('hidden');
+
+      const q = quizSession.questions[quizSession.currentIndex];
+      // 관대한 채점 로직: 전체 훈음 일치 OR (뜻 일부 + 음 일치) 허용
+      const cleanFull = q.full.replace(/[~,\s]+/g, '');
+      const hunTokens = q.hun.split(',').map(s => s.replace(/[~,\s]+/g, ''));
+      const validPatterns = [
+        cleanFull,
+        ...hunTokens.map(h => h + q.eum)
+      ];
+
+      const isCorrect = validPatterns.some(pat => pat === userVal);
+      finalizeQuizAnswer(isCorrect, q);
+    }
+
+    function finalizeQuizAnswer(isCorrect, q) {
+      const feedbackBox = document.getElementById('quizFeedbackBox');
+      const feedbackTitle = document.getElementById('quizFeedbackTitle');
+      const feedbackDetail = document.getElementById('quizFeedbackDetail');
+
+      feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-900', 'border-emerald-200', 'bg-red-50', 'text-red-900', 'border-red-200');
+      feedbackBox.classList.add('border');
+
+      if (isCorrect) {
+        quizSession.score++;
+        quizSession.streak++;
+        playTone('success');
+        feedbackBox.classList.add('bg-emerald-50', 'text-emerald-900', 'border-emerald-200');
+        feedbackTitle.textContent = '⭕ 정답입니다!';
+        feedbackDetail.textContent = `${q.hanja} : ${q.full} (${q.hint})`;
+      } else {
+        quizSession.streak = 0;
+        quizSession.wrongItems.push(q);
+        // 틀린 문제는 자동으로 '헷갈려요' 상태에 등록
+        appState.statusMap[q.id] = 'review';
+        saveState();
+        playTone('wrong');
+        feedbackBox.classList.add('bg-red-50', 'text-red-900', 'border-red-200');
+        feedbackTitle.textContent = `❌ 아쉽네요! 정답은 [${q.hanja} : ${q.full}]`;
+        feedbackDetail.textContent = q.hint;
+      }
+
+      document.getElementById('quizScoreNum').textContent = quizSession.score;
+    }
+
+    function nextQuizQuestion() {
+      quizSession.currentIndex++;
+      if (quizSession.currentIndex >= quizSession.questions.length) {
+        showQuizResult();
+      } else {
+        renderQuizQuestion();
+      }
+    }
+
+    function quitQuiz() {
+      resetQuizToSetup();
+    }
+
+    function showQuizResult() {
+      document.getElementById('quizPlayView').classList.add('hidden');
+      document.getElementById('quizResultView').classList.remove('hidden');
+
+      const total = quizSession.questions.length;
+      const pct = Math.round((quizSession.score / total) * 100);
+
+      document.getElementById('quizResultSummary').textContent = `총 ${total}문제 중 ${quizSession.score}문제를 맞혔습니다.`;
+      document.getElementById('quizResultScorePercent').textContent = `${pct}점`;
+
+      const wrongContainer = document.getElementById('quizWrongListContainer');
+      const wrongItemsGrid = document.getElementById('quizWrongItems');
+
+      if (quizSession.wrongItems.length > 0) {
+        wrongContainer.classList.remove('hidden');
+        wrongItemsGrid.innerHTML = quizSession.wrongItems.map(item => `
+          <div class="bg-white p-2.5 rounded-xl border border-amber-200 flex items-center gap-2">
+            <span class="font-hanja text-2xl font-bold text-ink-900">${item.hanja}</span>
+            <div class="text-xs">
+              <div class="font-bold text-ink-900">${item.full}</div>
+              <div class="text-[10px] text-slate-400">No.${item.id}</div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        wrongContainer.classList.add('hidden');
+      }
+    }
+
+    function resetQuizToSetup() {
+      document.getElementById('quizPlayView').classList.add('hidden');
+      document.getElementById('quizResultView').classList.add('hidden');
+      document.getElementById('quizSetupView').classList.remove('hidden');
+    }
+
+    function reviewWrongFromQuiz() {
+      startRecommendedStudy('review');
+    }
+
+    /**
+     * =========================================================================
+     * 7. 160자 전체 한자표 & 뜻 가리기 암기 모드
+     * =========================================================================
+     */
+    function setListUnit(unitId) {
+      listUnitFilter = unitId;
+      document.querySelectorAll('.lunit-chip').forEach(btn => {
+        const active = btn.dataset.lunit === unitId;
+        btn.className = active
+          ? 'lunit-chip px-3 py-1 rounded-full text-xs font-bold bg-ink-900 text-white shrink-0'
+          : 'lunit-chip px-3 py-1 rounded-full text-xs font-semibold bg-hanji-100 text-slate-600 shrink-0';
+      });
+      renderFullList();
+    }
+
+    function toggleBlindMeaning() {
+      isBlindMeaning = !isBlindMeaning;
+      revealedSet.clear();
+      const btn = document.getElementById('blindMeaningBtn');
+      const label = document.getElementById('blindLabel');
+      const icon = document.getElementById('blindIcon');
+
+      if (isBlindMeaning) {
+        btn.classList.add('bg-seal-600', 'text-white', 'border-seal-600');
+        btn.classList.remove('bg-hanji-50', 'text-slate-700');
+        label.textContent = '뜻 모두 보이기';
+        icon.className = 'ph ph-eye';
+      } else {
+        btn.classList.remove('bg-seal-600', 'text-white', 'border-seal-600');
+        btn.classList.add('bg-hanji-50', 'text-slate-700');
+        label.textContent = '뜻 가리기';
+        icon.className = 'ph ph-eye-slash';
+      }
+      renderFullList();
+    }
+
+    function handleListCardClick(id) {
+      if (isBlindMeaning) {
+        if (revealedSet.has(id)) revealedSet.delete(id);
+        else revealedSet.add(id);
+        renderFullList();
+      } else {
+        // 해당 한자의 플래시카드로 바로 이동
+        document.getElementById('cardUnitFilter').value = 'all';
+        document.getElementById('cardStatusFilter').value = 'all';
+        deck = [...HANJA_DATA];
+        const idx = deck.findIndex(x => x.id === id);
+        currentCardIdx = idx >= 0 ? idx : 0;
+        isFlipped = false;
+        switchTab('cards');
+      }
+    }
+
+    function renderFullList() {
+      const keyword = document.getElementById('listSearchInput').value.trim().toLowerCase();
+      const container = document.getElementById('hanjaGridContainer');
+
+      const filtered = HANJA_DATA.filter(item => {
+        const unitMatch = listUnitFilter === 'all' || item.unitId === listUnitFilter;
+        if (!unitMatch) return false;
+        if (!keyword) return true;
+        return (
+          String(item.id) === keyword ||
+          item.hanja.includes(keyword) ||
+          item.full.toLowerCase().includes(keyword)
+        );
+      });
+
+      container.innerHTML = filtered.map(item => {
+        const st = appState.statusMap[item.id];
+        let dotColor = 'bg-slate-200';
+        if (st === 'mastered') dotColor = 'bg-emerald-500';
+        else if (st === 'review') dotColor = 'bg-amber-400';
+
+        const hideText = isBlindMeaning && !revealedSet.has(item.id);
+
+        return `
+          <div onclick="handleListCardClick(${item.id})"
+            class="bg-white rounded-2xl p-3 border border-hanji-200 hover:border-seal-400 shadow-2xs cursor-pointer transition active:scale-[0.98] flex flex-col justify-between">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 font-bold mb-1">
+              <span>${item.id}</span>
+              <span class="w-2 h-2 rounded-full ${dotColor}"></span>
+            </div>
+            <div class="text-center my-1">
+              <div class="font-hanja text-4xl font-bold text-ink-900">${item.hanja}</div>
+            </div>
+            <div class="text-center mt-1.5 min-h-[28px] flex items-center justify-center">
+              ${hideText
+                ? `<span class="px-2.5 py-0.5 rounded-md bg-hanji-200 text-hanji-200 text-xs font-bold select-none">터치해 확인</span>`
+                : `<span class="text-xs font-bold text-ink-800 break-keep">${item.full}</span>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * =========================================================================
+     * 8. 유틸리티 (초기화 모달 & 토스트 메시지)
+     * =========================================================================
+     */
+    function openResetModal() {
+      document.getElementById('resetModal').classList.remove('hidden');
+    }
+
+    function closeResetModal() {
+      document.getElementById('resetModal').classList.add('hidden');
+    }
+
+    function confirmResetProgress() {
+      appState.statusMap = {};
+      saveState();
+      closeResetModal();
+      renderHomeDashboard();
+      renderFlashcard();
+      renderFullList();
+      showToast('모든 학습 기록이 초기화되었습니다');
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toastMsg');
+      document.getElementById('toastText').textContent = msg;
+      toast.classList.remove('opacity-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0');
+      }, 2200);
+    }
+
+    // 앱 초기화 실행
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      switchTab('cards'); // 바로 카드 학습을 시작할 수 있도록 카드 탭으로 진입
+      renderHomeDashboard();
+    });
+  </script>
+</body>
+</html>
